@@ -39,9 +39,9 @@ jobs:
       - name: Per FTP auf webseiten-mueller.de hochladen
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: s76.goserver.host                 # Bitte anpassen, falls dein FTP-Host anders heißt
-          username: web263                          # Deinen echten FTP-Benutzernamen hier eintragen
-          password: ${{ secrets.FTP_PASSWORD }}     # Greift sicher auf das eben angelegte Secret zu
-          local-dir: ./                             # Ordner lokal
-          server-dir: /home/www/webseiten-mueller.de/veritas-atmo               # Zielordner auf dem Webserver (ggf. anpassen, z.B. /html/veritas-atmo/)
-          include: 'index.html'                     # Lädt gezielt nur die generierte index.html hoch
+          server: s76.goserver.host                                                 
+          username: web263                          
+          password: ${{ secrets.FTP_PASSWORD }}    
+          local-dir: ./                            
+          server-dir: /home/www/webseiten-mueller.de/veritas-atmo/              
+          include: 'index.html'                     
