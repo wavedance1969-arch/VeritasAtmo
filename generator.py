@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timezone
 import urllib.request
 import urllib.parse
+import sys
 
 DEFAULT_LAT = 51.6167
 DEFAULT_LON = 7.3833
@@ -20,9 +21,15 @@ WEEKDAYS = {
 
 def get_coordinates():
     print("==================================================")
-    print("   VeritasAtmo – Pro & Senior-Guard Life-Protect  ")
+    print("  VeritasAtmo – Pro & Senior-Guard Life-Protect  ")
     print("==================================================")
-    user_input = input(f"Gib deinen Wohnort oder deine PLZ ein (Standard: {DEFAULT_LOCATION_NAME}): ").strip()
+    
+    # Automatische Erkennung: Auf dem GitHub-Server läuft kein interaktives Terminal
+    if not sys.stdin.isatty():
+        user_input = ""
+        print(f"[INFO] Kein interaktives Terminal erkannt. Verwende Standard: {DEFAULT_LOCATION_NAME}")
+    else:
+        user_input = input(f"Gib deinen Wohnort oder deine PLZ ein (Standard: {DEFAULT_LOCATION_NAME}): ").strip()
     
     if not user_input:
         return DEFAULT_LAT, DEFAULT_LON, DEFAULT_LOCATION_NAME
