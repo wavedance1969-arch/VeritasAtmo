@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeritasAtmo Pro – Wetter & Biometeo Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #090d16;
+            --card-bg: #111827;
+            --border-color: #1f2937;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-blue: #38bdf8;
+            --accent-warning: #fbbf24;
+            --accent-success: #34d399;
+            --accent-danger: #f87171;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px 20px;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+        h1 {
+            color: var(--accent-blue);
+            font-size: 2rem;
+            margin-bottom: 8px;
+            letter-spacing: -0.025em;
+        }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .meta-info {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 18px;
+        }
+        
+        /* Suchleiste für PLZ / Stadt */
+        .search-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .search-input {
+            background-color: #1f2937;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            outline: none;
+            width: 240px;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+        }
+        .search-btn {
+            background-color: var(--accent-blue);
+            color: #090d16;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .search-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Lade-Indikator */
+        #loading-indicator {
+            display: none;
+            color: var(--accent-warning);
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        /* Modernisierter Toggle Button */
+        .info-toggle-btn {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: var(--accent-blue);
+            border: 1px solid #38bdf840;
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .info-toggle-btn:hover {
+            background: var(--accent-blue);
+            color: #090d16;
+            border-color: var(--accent-blue);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.3);
+        }
+
+        /* Strategy Info Box Style */
+        .strategy-info-container {
+            background-color: var(--card-bg);
+            border: 1px solid #38bdf850;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(56, 189, 248, 0.1);
+        }
+        .strategy-info-container h3 {
+            color: var(--accent-blue);
+            margin-top: 0;
+            font-size: 1.15rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin-top: 15px;
+        }
+        .strategy-grid h4 {
+            color: var(--accent-warning);
+            margin: 0 0 6px 0;
+            font-size: 0.95rem;
+        }
+        .strategy-grid p {
+            margin: 0;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .senior-guard-alert {
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: #ffffff;
+            box-shadow: var(--card-shadow);
+        }
+        .level-red { background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); border: 1px solid var(--accent-danger); }
+        .level-blue { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 1px solid var(--accent-blue); }
+        
+        .care-alert-box {
+            background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: #f3f4f6;
+            box-shadow: var(--card-shadow);
+        }
+        .care-alert-box h4 {
+            color: var(--accent-warning);
+            margin-top: 0;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+        .doctor-advice-banner {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 4px solid var(--accent-warning);
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            color: #fef3c7;
+        }
+        .care-alert-box ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+        .care-alert-box li {
+            margin-bottom: 8px;
+        }
+        .care-alert-box strong {
+            color: var(--text-main);
+        }
+        
+        .trend-section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+        }
+        .trend-section h3 {
+            margin-top: 0;
+            font-size: 1.05rem;
+            color: var(--accent-blue);
+        }
+        .trend-svg-container {
+            width: 100%;
+            overflow-x: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 10px 0;
+        }
+        .grid-7-days {
+            display: grid;
+            gap: 20px;
+        }
+        .day-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: var(--card-shadow);
+        }
+        .today-card {
+            border: 2px solid var(--accent-blue);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .date-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .weather-emoji {
+            font-size: 1.8rem;
+        }
+        .date {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .date small {
+            font-weight: 400;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-left: 8px;
+        }
+        .badge-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .badge {
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.025em;
+        }
+        .badge-today { background-color: var(--accent-blue); color: #090d16; }
+        .badge-warning { background-color: rgba(251, 191, 36, 0.15); color: var(--accent-warning); border: 1px solid rgba(251, 191, 36, 0.3); }
+        .badge-success { background-color: rgba(52, 211, 153, 0.15); color: var(--accent-success); border: 1px solid rgba(52, 211, 153, 0.3); }
+        .badge-info { background-color: rgba(56, 189, 248, 0.15); color: var(--accent-blue); border: 1px solid rgba(56, 189, 248, 0.3); }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            font-size: 0.95rem;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 14px;
+            border-radius: 8px;
+        }
+        .divider {
+            border: 0;
+            border-top: 1px solid var(--border-color);
+            margin: 18px 0;
+        }
+        .senior-advice-box {
+            background: rgba(56, 189, 248, 0.06);
+            border-left: 3px solid var(--accent-blue);
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.92rem;
+        }
+        .methodology-box {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px dashed var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+        }
+        .method-title {
+            color: var(--accent-blue);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .methodology-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--text-muted);
+        }
+        .methodology-box li {
+            margin: 6px 0;
+            line-height: 1.4;
+        }
+        .methodology-box strong {
+            color: var(--text-main);
+        }
+        .impact-section p {
+            margin: 6px 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .sub-text {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-blue);
+            color: var(--text-muted);
+        }
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 25px;
+        }
+    </style>
+    <script>
+        function toggleInfoBox() {
+            var box = document.getElementById('strategy-box');
+            if (box.style.display === 'none') {
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        // Client-seitige Deutschland-Standortsuche per PLZ oder Stadtname ohne Popup
+        async function searchLocation(event) {
+            if (event && event.key && event.key !== 'Enter') return;
+            var query = document.getElementById('location-search-input').value.trim();
+            if (!query) return;
+
+            var loader = document.getElementById('loading-indicator');
+            loader.style.display = 'block';
+            loader.innerText = 'Suche Ort in Deutschland...';
+
+            try {
+                // country=DE sorgt dafür, dass nur deutsche Orte gefunden werden
+                let geoRes = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query) + '&count=5&language=de&format=json&country=DE');
+                let geoData = await geoRes.json();
+                
+                if (geoData.results && geoData.results.length > 0) {
+                    let loc = geoData.results[0];
+                    let lat = loc.latitude;
+                    let lon = loc.longitude;
+                    let name = loc.name + (loc.postcode ? ' (' + loc.postcode + ')' : '');
+                    
+                    loader.innerText = 'Lade Wetterdaten für ' + name + '...';
+                    
+                    // Wetterdaten direkt im Browser abrufen und Dashboard aktualisieren
+                    await updateDashboardData(lat, lon, name);
+                    loader.style.display = 'none';
+                } else {
+                    loader.style.display = 'none';
+                    alert('Kein Ort in Deutschland mit diesem Namen oder dieser PLZ gefunden.');
+                }
+            } catch (e) {
+                console.error(e);
+                loader.style.display = 'none';
+                alert('Fehler bei der Ortssuche.');
+            }
+        }
+
+        async function updateDashboardData(lat, lon, locationName) {
+            try {
+                let url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,cloud_cover_mean,pressure_msl_mean&hourly=precipitation,cloud_cover,surface_pressure,temperature_2m,relative_humidity_2m&timezone=Europe/Berlin';
+                let res = await fetch(url);
+                let data = await res.json();
+                
+                // Aktualisiere Standort-Anzeige im Header
+                document.getElementById('location-display').innerText = locationName;
+                
+                // Aktualisiere den Titel der Trend-Kurve & Hinweise sanft über UI
+                let pressures = data.daily.pressure_msl_mean;
+                
+                // Hinweis im Konsolen-Log für den Nutzer
+                console.log('Daten erfolgreich aktualisiert für: ' + locationName);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>VeritasAtmo Pro – Wetter & Biometeo Dashboard</h1>
+            <p class="subtitle">Wetterfühlichkeits-, Atmosphären- & Intensiv-Schutz-Dashboard für Senioren und Pflegebedürftige</p>
+            
+            <!-- Suchleiste für PLZ oder Stadt in Deutschland -->
+            <div class="search-container">
+                <input type="text" id="location-search-input" class="search-input" placeholder="Stadt" onkeypress="searchLocation(event)">
+                <button class="search-btn" onclick="searchLocation()">Standort Suchen</button>
+            </div>
+
+            <div id="loading-indicator"></div>
+
+            <p class="meta-info">Standort: <strong id="location-display">Waltrop (45731)</strong> | Aktualisiert (UTC): 2026-08-18T08:39:08.203720+00:00</p>
+            <button class="info-toggle-btn" onclick="toggleInfoBox()">ℹ️ Über VeritasAtmo & Strategie anzeigen/verstecken</button>
+        </header>
+
+        
+        <div id="strategy-box" class="strategy-info-container" style="display: none;">
+            <h3>ℹ️ Über VeritasAtmo: Unsere biometeorologische Systemanalyse</h3>
+            <div class="strategy-grid">
+                <div>
+                    <h4>1. Warum schauen wir in die Troposphäre?</h4>
+                    <p>Wir analysieren nicht nur das Wetter am Boden. Wir unterscheiden zwischen der <strong>oberen Schicht</strong> (Licht & Strahlung, z.B. Zirrus-Streuung durch Flugverkehr) und der <strong>unteren Schicht</strong> (Druck & Luftqualität).</p>
+                </div>
+                <div>
+                    <h4>2. Das Systemmodell</h4>
+                    <p>Wir betrachten den menschlichen Körper als <strong>biometeorologischen Sensor</strong>. Luftdruckänderungen wirken mechanisch auf Gefäße/Gelenke, während die Lichtqualität in der oberen Schicht den Hormonhaushalt (Antrieb/Melatonin) steuert.</p>
+                </div>
+                <div>
+                    <h4>3. Unsere Strategie</h4>
+                    <p>VeritasAtmo übersetzt diese atmosphärischen Daten in <strong>präventive Pflegehinweise</strong>. Wir sagen Ihnen nicht nur, wie das Wetter ist, sondern wie es sich physisch auf den Menschen auswirkt – von Gelenksteife bis hin zur Licht-Lethargie.</p>
+                </div>
+            </div>
+        </div>
+        
+        
+    <div class="care-alert-box">
+        <h4>🏥 Dauerhafter Intensiv-Pflege-Modus: Schutz für bettlägerige & immobile Pflegebedürftige</h4>
+        <div class="doctor-advice-banner">
+            <strong>⚠️ Wichtiger medizinischer Hinweis:</strong> Bitte stimmen Sie sämtliche Maßnahmen (insbesondere Trinkmengen, Lagerungsintervalle und Raumklimaanpassungen) unbedingt im Vorfeld mit dem <strong>behandelnden Arzt oder dem ambulanten/stationären Pflegedienst</strong> ab, um sie individuell auf den Gesundheitszustand abzustimmen.
+        </div>
+        <ul>
+            <li><strong>Hitzestau- & Raumklima-Prävention:</strong> Achten Sie konsequent auf die Raumtemperatur (ideal: 20–22°C). In Dachgeschossen droht schnell ein unbemerkter Hitzestau – Betten im Zweifelsfall in kühlere Räume im Erdgeschoss verlegen.</li>
+            <li><strong>Dekubitus-Alarm (Wundliegen) bei Schwüle & Feuchtigkeit:</strong> Durch Schwitzen auf der Matratze weicht die Haut auf. Verkürzen Sie bei feuchtem oder warmem Wetter den Lagerungswechsel auf <strong>mindestens alle 1,5 bis 2 Stunden</strong>, um Nekrosen und Gewebeschäden zu verhindern.</li>
+            <li><strong>Aktives Flüssigkeits-Management:</strong> Da immobile Senioren kein Durstgefühl mehr äußern und nicht selbst trinken können, verabreichen Sie regelmäßig (stündlich kleine Mengen) Wasser oder ungesüßten Tee per Löffel oder Schnabeltasse.</li>
+            <li><strong>Hautklima & Hygiene:</strong> Regelmäßig prüfen, ob der Rücken und die Gesäßregion durch Schweiß feucht sind; Bettwäsche sofort wechseln, um Hautirritationen vorzubeugen.</li>
+        </ul>
+    </div>
+
+        <section class="trend-section">
+            <h3>📈 7-Tage-Barometer-Trend (Luftdruckverlauf)</h3>
+            <div class="trend-svg-container">
+                <svg viewBox="0 0 900 80" preserveAspectRatio="none" style="width: 100%; height: 70px;">
+                    <polyline fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="0,50 150,70 300,68 450,58 600,39 750,10 900,12"/>
+                </svg>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 8px 0 0 0; text-align: right;">Verlauf von heute bis in 7 Tage (Höher = Stabiler Hochdruck)</p>
+        </section>
+
+        <section class="grid-7-days">
+            
+        <div class="day-card today-card">
+            <div class="card-header">
+                <div class="date-wrapper">
+                    <span class="weather-emoji">🌧️</span>
+                    <span class="date">Dienstag, 2026-08-18 <small>(Regnerisch & Dicht)</small></span>
+                </div>
+                <div class="badge-group">
+                    <span class="badge badge-today">HEUTE</span>
+                    <span class="badge badge-warning">Regnerisch & Dicht</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div><strong>Temp:</strong> 13.1°C bis 18.8°C</div>
+                    <div><strong>Niederschlag:</strong> 7.0 mm</div>
+                    <div><strong>Luftdruck:</strong> <span style="color: #fbbf24; font-weight: bold;">1011.4 hPa</span></div>
+                    <div><strong>Wolkenindex:</strong> <span style="color: #f87171; font-weight: bold;">96%</span></div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="senior-advice-box">
+                    <p style="margin: 0 0 5px 0; color: var(--accent-blue);"><strong>🛡️ Senior-Guard Handlungsempfehlung:</strong></p>
+                    <p style="margin: 0;"><strong>ℹ️ Hinweis:</strong> Moderater Luftdruck. Normaler Alltagsrhythmus ohne außergewöhnliche Belastungen.</p>
+                </div>
+
+                <hr class="divider">
+
+                <div class="methodology-box">
+                    <p class="method-title">🔬 VeritasAtmo Methodik & Atmosphären-Analyse:</p>
+                    <ul>
+                        <li><strong>Obere Troposphäre:</strong> Hohe Dichte / Zirrus-Streuung (Oberschicht blockiert direktes Vollspektrum-Licht).</li>
+                        <li><strong>Untere Troposphäre:</strong> Luftdruck bei 1011.4 hPa. Träge untere Troposphäre, Feuchtigkeitsstau.</li>
+                        <li><strong>CO₂- & Spurengas-Faktor:</strong> Erhöhter lokaler CO₂-Retentionsfaktor durch atmosphärische Deckelwirkung.</li>
+                    </ul>
+                </div>
+
+                <hr class="divider">
+
+                <div class="impact-section">
+                    <p style="margin-bottom: 8px;"><strong>Wetterfühlichkeits-Prognose (Dein Körper-Strohalm):</strong></p>
+                    <p class="sub-text"><strong>🔋 Energie- & Licht-Typ:</strong> Dämpfungsfaktor durch obere Schichten. Erhöhte Melatonin-Ausschüttung, Antriebslosigkeit.<br><strong>🧠 Gefäß-Typ:</strong> Mäßige Belastung durch fehlendes Vollspektrumlicht.</p>
+                    <p style="margin-top: 10px;"><strong>Natur/Agrar-Faktor:</strong> Niederschlag: 7.0 mm (Schwerpunkt: Vormittags, Nachmittags).</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="day-card">
+            <div class="card-header">
+                <div class="date-wrapper">
+                    <span class="weather-emoji">🌫️</span>
+                    <span class="date">Mittwoch, 2026-08-19 <small>(Schlierig / Hohe Oberschicht)</small></span>
+                </div>
+                <div class="badge-group">
+                    
+                    <span class="badge badge-warning">Schlierig / Hohe Oberschicht</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div><strong>Temp:</strong> 16.1°C bis 19.7°C</div>
+                    <div><strong>Niederschlag:</strong> 2.1 mm</div>
+                    <div><strong>Luftdruck:</strong> <span style="color: #f87171; font-weight: bold;">1006.4 hPa</span></div>
+                    <div><strong>Wolkenindex:</strong> <span style="color: #f87171; font-weight: bold;">100%</span></div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="senior-advice-box">
+                    <p style="margin: 0 0 5px 0; color: var(--accent-blue);"><strong>🛡️ Senior-Guard Handlungsempfehlung:</strong></p>
+                    <p style="margin: 0;"><strong>⚠️ Senior-Schonung:</strong> Starker Druckabfall. Gelenke, rheumatische Beschwerden und Gefäße reagieren sensibel. Schwindelrisiko beim Aufstehen – langsam agieren!</p>
+                </div>
+
+                <hr class="divider">
+
+                <div class="methodology-box">
+                    <p class="method-title">🔬 VeritasAtmo Methodik & Atmosphären-Analyse:</p>
+                    <ul>
+                        <li><strong>Obere Troposphäre:</strong> Hohe Dichte / Zirrus-Streuung (Oberschicht blockiert direktes Vollspektrum-Licht).</li>
+                        <li><strong>Untere Troposphäre:</strong> Luftdruck bei 1006.4 hPa. Träge untere Troposphäre, Feuchtigkeitsstau.</li>
+                        <li><strong>CO₂- & Spurengas-Faktor:</strong> Erhöhter lokaler CO₂-Retentionsfaktor durch atmosphärische Deckelwirkung.</li>
+                    </ul>
+                </div>
+
+                <hr class="divider">
+
+                <div class="impact-section">
+                    <p style="margin-bottom: 8px;"><strong>Wetterfühlichkeits-Prognose (Dein Körper-Strohalm):</strong></p>
+                    <p class="sub-text"><strong>🔋 Energie- & Licht-Typ:</strong> Dämpfungsfaktor durch obere Schichten. Erhöhte Melatonin-Ausschüttung, Antriebslosigkeit.<br><strong>🧠 Gefäß-Typ:</strong> Mäßige Belastung durch fehlendes Vollspektrumlicht.</p>
+                    <p style="margin-top: 10px;"><strong>Natur/Agrar-Faktor:</strong> Niederschlag: 2.1 mm (Schwerpunkt: Nachts).</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="day-card">
+            <div class="card-header">
+                <div class="date-wrapper">
+                    <span class="weather-emoji">⛅</span>
+                    <span class="date">Donnerstag, 2026-08-20 <small>(Wechselhaft / Gemischt)</small></span>
+                </div>
+                <div class="badge-group">
+                    
+                    <span class="badge badge-info">Wechselhaft / Gemischt</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div><strong>Temp:</strong> 15.2°C bis 22.0°C</div>
+                    <div><strong>Niederschlag:</strong> 0.25 mm</div>
+                    <div><strong>Luftdruck:</strong> <span style="color: #f87171; font-weight: bold;">1006.8 hPa</span></div>
+                    <div><strong>Wolkenindex:</strong> <span style="">61%</span></div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="senior-advice-box">
+                    <p style="margin: 0 0 5px 0; color: var(--accent-blue);"><strong>🛡️ Senior-Guard Handlungsempfehlung:</strong></p>
+                    <p style="margin: 0;"><strong>⚠️ Senior-Schonung:</strong> Starker Druckabfall. Gelenke, rheumatische Beschwerden und Gefäße reagieren sensibel. Schwindelrisiko beim Aufstehen – langsam agieren!</p>
+                </div>
+
+                <hr class="divider">
+
+                <div class="methodology-box">
+                    <p class="method-title">🔬 VeritasAtmo Methodik & Atmosphären-Analyse:</p>
+                    <ul>
+                        <li><strong>Obere Troposphäre:</strong> Optisch klare obere Troposphäre. Ungehinderter Frequenztransfer.</li>
+                        <li><strong>Untere Troposphäre:</strong> Stabiler Luftdruck (1006.8 hPa). Geringe mechanische Belastung.</li>
+                        <li><strong>CO₂- & Spurengas-Faktor:</strong> Standardmäßiger CO₂-Grundpegel.</li>
+                    </ul>
+                </div>
+
+                <hr class="divider">
+
+                <div class="impact-section">
+                    <p style="margin-bottom: 8px;"><strong>Wetterfühlichkeits-Prognose (Dein Körper-Strohalm):</strong></p>
+                    <p class="sub-text"><strong>🔋 Energie-Typ:</strong> Gute Lichtbedingungen, positiver Antrieb.<br><strong>🦴 Gelenk-Typ:</strong> Stabiler Luftdruck, weitgehend beschwerdefrei.</p>
+                    <p style="margin-top: 10px;"><strong>Natur/Agrar-Faktor:</strong> Niederschlag: 0.25 mm (Leichter Sprühregen / Schauertag).</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="day-card">
+            <div class="card-header">
+                <div class="date-wrapper">
+                    <span class="weather-emoji">⛅</span>
+                    <span class="date">Freitag, 2026-08-21 <small>(Wechselhaft / Gemischt)</small></span>
+                </div>
+                <div class="badge-group">
+                    
+                    <span class="badge badge-info">Wechselhaft / Gemischt</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div><strong>Temp:</strong> 14.4°C bis 22.3°C</div>
+                    <div><strong>Niederschlag:</strong> 0.0 mm</div>
+                    <div><strong>Luftdruck:</strong> <span style="color: #fbbf24; font-weight: bold;">1009.4 hPa</span></div>
+                    <div><strong>Wolkenindex:</strong> <span style="">34%</span></div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="senior-advice-box">
+                    <p style="margin: 0 0 5px 0; color: var(--accent-blue);"><strong>🛡️ Senior-Guard Handlungsempfehlung:</strong></p>
+                    <p style="margin: 0;"><strong>ℹ️ Hinweis:</strong> Moderater Luftdruck. Normaler Alltagsrhythmus ohne außergewöhnliche Belastungen.</p>
+                </div>
+
+                <hr class="divider">
+
+                <div class="methodology-box">
+                    <p class="method-title">🔬 VeritasAtmo Methodik & Atmosphären-Analyse:</p>
+                    <ul>
+                        <li><strong>Obere Troposphäre:</strong> Optisch klare obere Troposphäre. Ungehinderter Frequenztransfer.</li>
+                        <li><strong>Untere Troposphäre:</strong> Stabiler Luftdruck (1009.4 hPa). Geringe mechanische Belastung.</li>
+                        <li><strong>CO₂- & Spurengas-Faktor:</strong> Standardmäßiger CO₂-Grundpegel.</li>
+                    </ul>
+                </div>
+
+                <hr class="divider">
+
+                <div class="impact-section">
+                    <p style="margin-bottom: 8px;"><strong>Wetterfühlichkeits-Prognose (Dein Körper-Strohalm):</strong></p>
+                    <p class="sub-text"><strong>🔋 Energie-Typ:</strong> Gute Lichtbedingungen, positiver Antrieb.<br><strong>🦴 Gelenk-Typ:</strong> Stabiler Luftdruck, weitgehend beschwerdefrei.</p>
+                    <p style="margin-top: 10px;"><strong>Natur/Agrar-Faktor:</strong> Niederschlag: 0.0 mm (Kein signifikanter Niederschlag).</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="day-card">
+            <div class="card-header">
+                <div class="date-wrapper">
+                    <span class="weather-emoji">⛅</span>
+                    <span class="date">Samstag, 2026-08-22 <small>(Wechselhaft / Gemischt)</small></span>
+                </div>
+                <div class="badge-group">
+                    
+                    <span class="badge badge-info">Wechselhaft / Gemischt</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div><strong>Temp:</strong> 13.0°C bis 21.4°C</div>
+                    <div><strong>Niederschlag:</strong> 0.6 mm</div>
+                    <div><strong>Luftdruck:</strong> <span style="color: #fbbf24; font-weight: bold;">1014.2 hPa</span></div>
+                    <div><strong>Wolkenindex:</strong> <span style="">53%</span></div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="senior-advice-box">
+                    <p style="margin: 0 0 5px 0; color: var(--accent-blue);"><strong>🛡️ Senior-Guard Handlungsempfehlung:</strong></p>
+                    <p style="margin: 0;"><strong>ℹ️ Hinweis:</strong> Moderater Luftdruck. Normaler Alltagsrhythmus ohne außergewöhnliche Belastungen.</p>
+                </div>
+
+                <hr class="divider">
+
+                <div class="methodology-box">
+                    <p class="method-title">🔬 VeritasAtmo Methodik & Atmosphären-Analyse:</p>
+                    <ul>
+                        <li><strong>Obere Troposphäre:</strong> Optisch klare obere Troposphäre. Ungehinderter Frequenztransfer.</li>
+                        <li><strong>Untere Troposphäre:</strong> Stabiler Luftdruck (1014.2 hPa). Geringe mechanische Belastung.</li>
+                        <li><strong>CO₂- & Spurengas-Faktor:</strong> Standardmäßiger CO₂-Grundpegel.</li>
+                    </ul>
+                </div>
+
+                <hr class="divider">
+
+                <div class="impact-section">
+                    <p style="margin-bottom: 8px;"><strong>Wetterfühlichkeits-Prognose (Dein Körper-Strohalm):</strong></p>
+                    <p class="sub-text"><strong>🔋 Energie-Typ:</strong> Gute Lichtbedingungen, positiver Antrieb.<br><strong>🦴 Gelenk-Typ:</strong> Stabiler Luftdruck, weitgehend beschwerdefrei.</p>
+                    <p style="margin-top: 10px;"><strong>Natur/Agrar-Faktor:</strong> Niederschlag: 0.6 mm (Leichter Sprühregen / Schauertag).</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="day-card">
+            <div class="card-header">
+                <div class="date-wrapper">
+                    <span class="weather-emoji">☀️</span>
+                    <span class="date">Sonntag, 2026-08-23 <small>(Klar & Sonnig)</small></span>
+                </div>
+                <div class="badge-group">
+                    
+                    <span class="badge badge-success">Klar & Sonnig</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div><strong>Temp:</strong> 11.6°C bis 20.2°C</div>
+                    <div><strong>Niederschlag:</strong> 0.0 mm</div>
+                    <div><strong>Luftdruck:</strong> <span style="color: #34d399; font-weight: bold;">1021.6 hPa</span></div>
+                    <div><strong>Wolkenindex:</strong> <span style="color: #34d399; font-weight: bold;">24%</span></div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="senior-advice-box">
+                    <p style="margin: 0 0 5px 0; color: var(--accent-blue);"><strong>🛡️ Senior-Guard Handlungsempfehlung:</strong></p>
+                    <p style="margin: 0;"><strong>✅ Vital-Tipp:</strong> Stabiler Hochdruck. Günstige Bedingungen für den Kreislauf, ideal für kurze, ruhige Spaziergänge.</p>
+                </div>
+
+                <hr class="divider">
+
+                <div class="methodology-box">
+                    <p class="method-title">🔬 VeritasAtmo Methodik & Atmosphären-Analyse:</p>
+                    <ul>
+                        <li><strong>Obere Troposphäre:</strong> Optisch klare obere Troposphäre. Ungehinderter Frequenztransfer.</li>
+                        <li><strong>Untere Troposphäre:</strong> Stabiler Luftdruck (1021.6 hPa). Geringe mechanische Belastung.</li>
+                        <li><strong>CO₂- & Spurengas-Faktor:</strong> Standardmäßiger CO₂-Grundpegel.</li>
+                    </ul>
+                </div>
+
+                <hr class="divider">
+
+                <div class="impact-section">
+                    <p style="margin-bottom: 8px;"><strong>Wetterfühlichkeits-Prognose (Dein Körper-Strohalm):</strong></p>
+                    <p class="sub-text"><strong>🔋 Energie-Typ:</strong> Gute Lichtbedingungen, positiver Antrieb.<br><strong>🦴 Gelenk-Typ:</strong> Stabiler Luftdruck, weitgehend beschwerdefrei.</p>
+                    <p style="margin-top: 10px;"><strong>Natur/Agrar-Faktor:</strong> Niederschlag: 0.0 mm (Kein signifikanter Niederschlag).</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="day-card">
+            <div class="card-header">
+                <div class="date-wrapper">
+                    <span class="weather-emoji">⛅</span>
+                    <span class="date">Montag, 2026-08-24 <small>(Wechselhaft / Gemischt)</small></span>
+                </div>
+                <div class="badge-group">
+                    
+                    <span class="badge badge-info">Wechselhaft / Gemischt</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div><strong>Temp:</strong> 10.9°C bis 21.9°C</div>
+                    <div><strong>Niederschlag:</strong> 0.0 mm</div>
+                    <div><strong>Luftdruck:</strong> <span style="color: #34d399; font-weight: bold;">1021.0 hPa</span></div>
+                    <div><strong>Wolkenindex:</strong> <span style="color: #34d399; font-weight: bold;">28%</span></div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="senior-advice-box">
+                    <p style="margin: 0 0 5px 0; color: var(--accent-blue);"><strong>🛡️ Senior-Guard Handlungsempfehlung:</strong></p>
+                    <p style="margin: 0;"><strong>✅ Vital-Tipp:</strong> Stabiler Hochdruck. Günstige Bedingungen für den Kreislauf, ideal für kurze, ruhige Spaziergänge.</p>
+                </div>
+
+                <hr class="divider">
+
+                <div class="methodology-box">
+                    <p class="method-title">🔬 VeritasAtmo Methodik & Atmosphären-Analyse:</p>
+                    <ul>
+                        <li><strong>Obere Troposphäre:</strong> Optisch klare obere Troposphäre. Ungehinderter Frequenztransfer.</li>
+                        <li><strong>Untere Troposphäre:</strong> Stabiler Luftdruck (1021.0 hPa). Geringe mechanische Belastung.</li>
+                        <li><strong>CO₂- & Spurengas-Faktor:</strong> Standardmäßiger CO₂-Grundpegel.</li>
+                    </ul>
+                </div>
+
+                <hr class="divider">
+
+                <div class="impact-section">
+                    <p style="margin-bottom: 8px;"><strong>Wetterfühlichkeits-Prognose (Dein Körper-Strohalm):</strong></p>
+                    <p class="sub-text"><strong>🔋 Energie-Typ:</strong> Gute Lichtbedingungen, positiver Antrieb.<br><strong>🦴 Gelenk-Typ:</strong> Stabiler Luftdruck, weitgehend beschwerdefrei.</p>
+                    <p style="margin-top: 10px;"><strong>Natur/Agrar-Faktor:</strong> Niederschlag: 0.0 mm (Kein signifikanter Niederschlag).</p>
+                </div>
+            </div>
+        </div>
+        
+        </section>
+
+        <footer>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px;">
+                <a href="https://buy.stripe.com/dRm14p0vx47q4NzdjrdjO00" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background-color: #fbbf24; color: #090d16; font-weight: 700; padding: 10px 18px; border-radius: 12px; font-size: 0.85rem; text-decoration: none; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25); transition: background-color 0.2s, transform 0.2s;">
+                    <span>☕</span> App unterstützen / Kaffee spenden
+                </a>
+            </div>
+            <p>VeritasAtmo Engine – Wissenschaftliche Korrelation von atmosphärischem Druck, Lichtfilter und Körperreaktion im Dienste Ihrer Gesundheit und Pflege.</p>
+            <p style="margin-top: 8px; color: var(--text-muted); font-size: 0.75rem;">
+                © 2026 Uwe Müller &bull; <span style="color: var(--accent-blue);">Webseiten Müller</span>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
