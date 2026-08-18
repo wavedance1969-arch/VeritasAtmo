@@ -755,7 +755,7 @@ def generate_dashboard():
         <footer>
             <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px;">
                 <a href="https://buy.stripe.com/dRm14p0vx47q4NzdjrdjO00" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background-color: #fbbf24; color: #090d16; font-weight: 700; padding: 10px 18px; border-radius: 12px; font-size: 0.85rem; text-decoration: none; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25); transition: background-color 0.2s, transform 0.2s;">
-                    <span>☕</span> App unterstützen / Kaffee spenden
+                    <span>☕</span> Unterstützen Sie unsere App mit einem Kaffee
                 </a>
             </div>
             <p>VeritasAtmo Engine – Wissenschaftliche Korrelation von atmosphärischem Druck, Lichtfilter und Körperreaktion im Dienste Ihrer Gesundheit und Pflege.</p>
@@ -772,7 +772,8 @@ def generate_dashboard():
     with open(output_filename, "w", encoding="utf-8") as f:
         f.write(html_content)
         
-    print(f"\n[ERFOLG] Das moderne Dashboard '{output_filename}' wurde erfolgreich für {location_name} generiert!")
+    print(f"\n[ERFOLG] Das moderne Dashboard '{output_filename}' wurde erfolgreich für {location_name} generiert!")  
+    
 
 if __name__ == "__main__":
     generate_dashboard()
